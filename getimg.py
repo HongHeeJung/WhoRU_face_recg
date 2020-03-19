@@ -21,17 +21,19 @@ ref = db.reference()
 
 
 def find_user():
-    usr = ref.child('10주 1300/FLAG').get()
-    print(usr)
-    if usr == 1:
-        print(usr)
+    rd = ref.child('10주 1300/Request Detection/').get()
+    if rd == 1:
+        username = ref.child('10주 1300/username/').get()
+        print(username)
 
 
-find_user()
 bucket = storage.bucket(app=sr_app)
+# 핸드폰에서 firebase에 저장할 때 비교 사진 저장 이름이 중요
 blob = bucket.blob("WhoRU_target/jacob.jpg")
 img_url = blob.generate_signed_url(datetime.timedelta(seconds=300), method='GET')
 # print(img_url)
-
-urllib.request.urlretrieve(img_url, './image/1.jpg')
+find_user()
+# firebase에서 폴더에 저장할 때 비교 사진 이름 중요 -> face recognition
+urllib.request.urlretrieve(img_url, './knn_examples/train/{}.jpg'.format(username))
 print("save")
+
