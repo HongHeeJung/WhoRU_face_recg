@@ -1,36 +1,25 @@
 """
 This is an example of using the k-nearest-neighbors (KNN) algorithm for face recognition.
-
 When should I use this example?
 This example is useful when you wish to recognize a large set of known people,
 and make a prediction for an unknown person in a feasible computation time.
-
 Algorithm Description:
 The knn classifier is first trained on a set of labeled (known) faces and can then predict the person
 in a live stream by finding the k most similar faces (images with closet face-features under eucledian distance)
 in its training set, and performing a majority vote (possibly weighted) on their label.
-
 For example, if k=3, and the three closest face images to the given image in the training set are one image of Biden
 and two images of Obama, The result would be 'Obama'.
-
 * This implementation uses a weighted vote, such that the votes of closer-neighbors are weighted more heavily.
-
 Usage:
-
 1. Prepare a set of images of the known people you want to recognize. Organize the images in a single directory
    with a sub-directory for each known person.
-
 2. Then, call the 'train' function with the appropriate parameters. Make sure to pass in the 'model_save_path' if you
    want to save the model to disk so you can re-use the model without having to re-train it.
-
 3. Call 'predict' and pass in your trained model to recognize the people in a live video stream.
-
 NOTE: This example requires scikit-learn, opencv and numpy to be installed! You can install it with pip:
-
 $ pip3 install scikit-learn
 $ pip3 install numpy
 $ pip3 install opencv-contrib-python
-
 """
 
 import cv2
@@ -78,11 +67,8 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'JPG'}
 def train(train_dir, model_save_path=None, n_neighbors=None, knn_algo='ball_tree', verbose=False):
     """
     Trains a k-nearest neighbors classifier for face recognition.
-
     :param train_dir: directory that contains a sub-directory for each known person, with its name.
-
      (View in source code to see train_dir example tree structure)
-
      Structure:
         <train_dir>/
         ├── <person1>/
@@ -93,7 +79,6 @@ def train(train_dir, model_save_path=None, n_neighbors=None, knn_algo='ball_tree
         │   ├── <somename1>.jpeg
         │   └── <somename2>.jpeg
         └── ...
-
     :param model_save_path: (optional) path to save model on disk
     :param n_neighbors: (optional) number of neighbors to weigh in classification. Chosen automatically if not specified
     :param knn_algo: (optional) underlying data structure to support knn.default is ball_tree
@@ -144,7 +129,6 @@ def train(train_dir, model_save_path=None, n_neighbors=None, knn_algo='ball_tree
 def predict(X_frame, knn_clf=None, model_path=None, distance_threshold=0.5):
     """
     Recognizes faces in given image using a trained KNN classifier
-
     :param X_frame: frame to do the prediction on.
     :param knn_clf: (optional) a knn classifier object. if not specified, model_save_path must be specified.
     :param model_path: (optional) path to a pickled knn classifier. if not specified, model_save_path must be knn_clf.
@@ -183,13 +167,14 @@ def show_prediction_labels_on_image(frame, predictions):
     global cnt_face
     """
     Shows the face recognition results visually.
-
     :param frame: frame to show the predictions on
     :param predictions: results of the predict function
     :return opencv suited image to be fitting with cv2.imshow fucntion:
     """
     pil_image = Image.fromarray(frame)
     draw = ImageDraw.Draw(pil_image)
+    # 시작시간 기록
+    start_time = time.time()
 
     for name, (top, right, bottom, left) in predictions:
         # enlarge the predictions for the full sized image.
@@ -206,15 +191,30 @@ def show_prediction_labels_on_image(frame, predictions):
         names = name.decode()
 
         ############### name compare ######################################
-        if names == username:
-            print("true")
-            cnt_face += 1
+        if cnt_face < 40:
+            # LED = Orange
+            if names == username:
+                print("true")
+                cnt_face += 1
+            else:
+                print("false")
+
             if cnt_face == 40:
-                alldata.child("06수 8850").update({'FLAG': '1'})
-        else:
-            if cnt_face < 40:
-                cnt_face = 0
-            print("false")
+                alldata.child("06수 8850").update({'approved': '1'})
+                print("Recognition successfully!")
+                # LED = Green
+            elif cnt_face > 40:
+                cap1.release()
+                cv2.destroyAllWindows()
+                # LED = OFF
+                exit(0)
+            now = time.time()
+            if now > start_time + 120:
+                print("Disapproved. Try Again.")
+        # 일정 시간이 지나면 알람
+        # 위에꺼 안되면
+        # -> timer 함수? http://i5on9i.blogspot.com/2012/10/blog-post_31.html
+
         #################################################################
 
         # Draw a label with a name below the face
